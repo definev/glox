@@ -2,6 +2,8 @@ package glox
 
 import "fmt"
 
+const DEBUG_TRACE_EXECUTION = true
+
 func (c *chunk) DisassembleChunk(name string) {
 	fmt.Printf("== %s ==\n", name)
 
@@ -28,6 +30,16 @@ func (c *chunk) DisassembleInstruction(offset int) int {
 		return constantInstruction("OP_CONSTANT", c, offset)
 	case OP_CONSTANT_LONG:
 		return constantLongInstruction("OP_CONSTANT_LONG", c, offset)
+	case OP_NEGATE:
+		return simpleInstruction("OP_NEGATE", offset)
+	case OP_ADD:
+		return simpleInstruction("OP_ADD", offset)
+	case OP_SUBTRACT:
+		return simpleInstruction("OP_SUBTRACT", offset)
+	case OP_MULTIPLY:
+		return simpleInstruction("OP_MULTIPLY", offset)
+	case OP_DIVIDE:
+		return simpleInstruction("OP_DIVIDE", offset)
 	default:
 		fmt.Println("Unknown opcode")
 		return offset + 1
@@ -48,11 +60,7 @@ func constantInstruction(name string, c *chunk, offset int) int {
 }
 
 func constantLongInstruction(name string, c *chunk, offset int) int {
-	constant0 := (*c.Code)[offset+1]
-	constant1 := (*c.Code)[offset+2]
-	constant2 := (*c.Code)[offset+3]
-
-	constant := int(constant0)<<16 | int(constant1)<<8 | int(constant2)
+	constant := c.ReadConstantLong(offset + 1)
 
 	fmt.Printf("%-16s %4d '", name, constant)
 	c.Constants.Print(int(constant))

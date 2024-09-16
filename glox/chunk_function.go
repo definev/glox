@@ -19,6 +19,15 @@ func (c *chunk) WriteConstant(value Value, Line int) {
 	c.Write(constantBytes[2], Line)
 }
 
+func (c *chunk) ReadConstantLong(offset int) int {
+	constant0 := (*c.Code)[offset]
+	constant1 := (*c.Code)[offset+1]
+	constant2 := (*c.Code)[offset+2]
+
+	constant := int(constant0)<<16 | int(constant1)<<8 | int(constant2)
+	return constant
+}
+
 func (c *chunk) GetLine(offset int) int {
 	line := 0
 	for i := 0; i < len(*c.Lines); i++ {

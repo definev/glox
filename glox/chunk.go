@@ -4,6 +4,11 @@ const (
 	OP_RETURN byte = iota
 	OP_CONSTANT
 	OP_CONSTANT_LONG
+	OP_ADD
+	OP_SUBTRACT
+	OP_MULTIPLY
+	OP_DIVIDE
+	OP_NEGATE
 )
 
 type line struct {

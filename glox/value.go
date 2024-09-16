@@ -39,5 +39,9 @@ func (v *valueArray) Free() {
 }
 
 func (v *valueArray) Print(index int) {
-	fmt.Printf("%g", (*v.Values)[index])
+	PrintValue((*v.Values)[index])
+}
+
+func PrintValue(value Value) {
+	fmt.Printf("%g", value)
 }
