@@ -32,6 +32,10 @@ func BinaryOp(vm *VM, op byte) {
 	}
 }
 
+func Interpret(line string) InterpretResult {
+	return INTERPRET_OK
+}
+
 type VM struct {
 	chunk    *chunk
 	ip       int
@@ -122,4 +126,8 @@ func (vm *VM) Push(value Value) {
 func (vm *VM) Pop() Value {
 	vm.stackTop--
 	return vm.stack[vm.stackTop]
+}
+
+func (vm *VM) Peek(distance int) Value {
+	return vm.stack[vm.stackTop-distance-1]
 }
