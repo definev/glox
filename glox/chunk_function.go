@@ -1,11 +1,11 @@
 package glox
 
-func (c *chunk) AddConstant(value Value) int {
+func (c *Chunk) AddConstant(value Value) int {
 	c.Constants.Write(value)
 	return c.Constants.Count - 1
 }
 
-func (c *chunk) WriteConstant(value Value, Line int) {
+func (c *Chunk) WriteConstant(value Value, Line int) {
 	c.Write(OP_CONSTANT_LONG, Line)
 	constant := c.AddConstant(value)
 
@@ -19,7 +19,7 @@ func (c *chunk) WriteConstant(value Value, Line int) {
 	c.Write(constantBytes[2], Line)
 }
 
-func (c *chunk) ReadConstantLong(offset int) int {
+func (c *Chunk) ReadConstantLong(offset int) int {
 	constant0 := (*c.Code)[offset]
 	constant1 := (*c.Code)[offset+1]
 	constant2 := (*c.Code)[offset+2]
@@ -28,7 +28,7 @@ func (c *chunk) ReadConstantLong(offset int) int {
 	return constant
 }
 
-func (c *chunk) GetLine(offset int) int {
+func (c *Chunk) GetLine(offset int) int {
 	line := 0
 	for i := 0; i < len(*c.Lines); i++ {
 		line += (*c.Lines)[i].Count
@@ -39,7 +39,7 @@ func (c *chunk) GetLine(offset int) int {
 	return -1
 }
 
-func (c *chunk) WriteLine(Line int) {
+func (c *Chunk) WriteLine(Line int) {
 	linesLen := len(*c.Lines)
 	if linesLen == 0 {
 		(*c.Lines)[c.Count] = line{

@@ -16,7 +16,7 @@ type line struct {
 	Count int
 }
 
-type chunk struct {
+type Chunk struct {
 	Count    int
 	Capacity int
 	Code     *[]byte
@@ -25,15 +25,15 @@ type chunk struct {
 	Constants valueArray
 }
 
-func NewChunk() *chunk {
-	return &chunk{
+func NewChunk() *Chunk {
+	return &Chunk{
 		Count:    0,
 		Capacity: 0,
 		Code:     nil,
 	}
 }
 
-func (c *chunk) Init() {
+func (c *Chunk) Init() {
 	c.Count = 0
 	c.Capacity = 0
 	c.Code = nil
@@ -41,7 +41,7 @@ func (c *chunk) Init() {
 	c.Constants.Init()
 }
 
-func (c *chunk) Write(Byte byte, Line int) {
+func (c *Chunk) Write(Byte byte, Line int) {
 	if c.Capacity < c.Count+1 {
 		c.Capacity = GROW_CAPACITY(c.Capacity)
 		c.Code = GROW_ARRAY(c.Code, c.Capacity)
@@ -54,7 +54,7 @@ func (c *chunk) Write(Byte byte, Line int) {
 	c.Count += 1
 }
 
-func (c *chunk) Free() {
+func (c *Chunk) Free() {
 	c.Init()
 	c.Constants.Free()
 }
