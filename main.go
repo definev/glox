@@ -37,34 +37,19 @@ func RunFile(file string) {
 }
 
 func ReadFile(file string) string {
-	dat, err := os.ReadFile(file)
+	data, err := os.ReadFile(file)
 	if err != nil {
 		fmt.Printf("Could not open file \"%s\".\n", err)
 		os.Exit(74)
 		return ""
 	}
-	return string(dat)
+	return string(data)
 }
 
 func main() {
-	glox.Compile("1000 + 231 * 33113")
-
 	vm := glox.NewVM()
 
 	vm.Init()
-
-	chunk := glox.NewChunk()
-	chunk.Init()
-
-	chunk.WriteConstant(glox.Value(10), 100)
-	chunk.WriteConstant(glox.Value(5), 100)
-
-	chunk.Write(glox.OP_DIVIDE, 100)
-	chunk.Write(glox.OP_NEGATE, 100)
-
-	chunk.Write(glox.OP_RETURN, 100)
-	// chunk.DisassembleChunk("test_chunk")
-	vm.Interpret(chunk)
+	vm.Interpret("(5)")
 	vm.Free()
-	chunk.Free()
 }

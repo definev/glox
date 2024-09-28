@@ -3,8 +3,9 @@ package glox
 import "fmt"
 
 const DEBUG_TRACE_EXECUTION = true
+const DEBUG_PRINT_CODE = false
 
-func (c *chunk) DisassembleChunk(name string) {
+func (c *Chunk) DisassembleChunk(name string) {
 	fmt.Printf("== %s ==\n", name)
 
 	for offset := 0; offset < c.Count; {
@@ -12,7 +13,7 @@ func (c *chunk) DisassembleChunk(name string) {
 	}
 }
 
-func (c *chunk) DisassembleInstruction(offset int) int {
+func (c *Chunk) DisassembleInstruction(offset int) int {
 	fmt.Printf("%04d ", offset)
 	if offset > 0 &&
 		c.GetLine(offset) == c.GetLine(offset-1) {
@@ -51,7 +52,7 @@ func simpleInstruction(name string, offset int) int {
 	return offset + 1
 }
 
-func constantInstruction(name string, c *chunk, offset int) int {
+func constantInstruction(name string, c *Chunk, offset int) int {
 	constant := (*c.Code)[offset+1]
 	fmt.Printf("%-16s %4d '", name, constant)
 	c.Constants.Print(int(constant))
@@ -59,7 +60,7 @@ func constantInstruction(name string, c *chunk, offset int) int {
 	return offset + 2
 }
 
-func constantLongInstruction(name string, c *chunk, offset int) int {
+func constantLongInstruction(name string, c *Chunk, offset int) int {
 	constant := c.ReadConstantLong(offset + 1)
 
 	fmt.Printf("%-16s %4d '", name, constant)

@@ -37,7 +37,7 @@ func Interpret(line string) InterpretResult {
 }
 
 type VM struct {
-	chunk    *chunk
+	chunk    *Chunk
 	ip       int
 	stack    []Value
 	stackTop int
@@ -54,10 +54,39 @@ func (vm *VM) Init() {
 
 func (vm *VM) Free() {}
 
-func (vm *VM) Interpret(chunk *chunk) InterpretResult {
+func (vm *VM) Interpret(source string) InterpretResult {
+	chunk := NewChunk()
+	chunk.Init()
+
+	if !vm.Compile(source, chunk) {
+		chunk.Free()
+		return INTERPRET_COMPILE_ERROR
+	}
+
 	vm.chunk = chunk
 	vm.ip = 0
-	return vm.Run()
+
+	result := vm.Run()
+
+	chunk.Free()
+	return result
+}
+
+func (vm *VM) Compile(source string, chunk *Chunk) bool {
+	scanner.initScanner(source)
+
+	parser.complierChunk = chunk
+
+	parser.hadError = false
+	parser.panicMode = false
+
+	parser.advance()
+	parser.expression()
+
+	parser.consume(TOKEN_EOF, "Expect end of expression.")
+	parser.endCompiler()
+
+	return !parser.hadError
 }
 
 func (vm *VM) ReadByte() (byte, error) {
@@ -106,8 +135,11 @@ func (vm *VM) Run() InterpretResult {
 		case OP_NEGATE:
 			vm.Push(-vm.Pop())
 		case OP_ADD:
+			BinaryOp(vm, instruction)
 		case OP_SUBTRACT:
+			BinaryOp(vm, instruction)
 		case OP_MULTIPLY:
+			BinaryOp(vm, instruction)
 		case OP_DIVIDE:
 			BinaryOp(vm, instruction)
 		}
