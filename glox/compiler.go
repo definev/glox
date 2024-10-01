@@ -144,7 +144,7 @@ func (parser *Parser) errorAt(token *Token, message string) {
 	} else if token.tokenType == TOKEN_ERROR {
 		// Nothing.
 	} else {
-		fmt.Fprintf(os.Stderr, " at '%s'", token.start)
+		fmt.Fprintf(os.Stderr, " at '%s'", token.value)
 	}
 
 	fmt.Fprintf(os.Stderr, ": %s\n", message)
