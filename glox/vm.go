@@ -16,20 +16,27 @@ const (
 	STACK_MAX = 256
 )
 
-func BinaryOp(vm *VM, op byte) {
-	b := vm.Pop()
-	a := vm.Pop()
+func BinaryOp(vm *VM, op byte) InterpretResult {
+	if !vm.Peek(0).IsNumber() || !vm.Peek(1).IsNumber() {
+		vm.runtimeError("Operands must be numbers.")
+		return INTERPRET_RUNTIME_ERROR
+	}
+
+	b := *vm.Pop().AsNumber()
+	a := *vm.Pop().AsNumber()
 
 	switch op {
 	case OP_ADD:
-		vm.Push(a + b)
+		vm.Push(NewNumberVal(a + b))
 	case OP_SUBTRACT:
-		vm.Push(a - b)
+		vm.Push(NewNumberVal(a - b))
 	case OP_MULTIPLY:
-		vm.Push(a * b)
+		vm.Push(NewNumberVal(a * b))
 	case OP_DIVIDE:
-		vm.Push(a / b)
+		vm.Push(NewNumberVal(a / b))
 	}
+
+	return INTERPRET_OK
 }
 
 func Interpret(line string) InterpretResult {
@@ -99,6 +106,10 @@ func (vm *VM) ReadByte() (byte, error) {
 
 }
 
+func (vm *VM) IsFalsy(value Value) bool {
+	return value.IsNil() || (value.IsBool() && !*value.AsBool())
+}
+
 func (vm *VM) Run() InterpretResult {
 	for {
 		if DEBUG_TRACE_EXECUTION {
@@ -132,8 +143,26 @@ func (vm *VM) Run() InterpretResult {
 			vm.ip = vm.ip + 3
 			constantValue := (*vm.chunk.Constants.Values)[constant]
 			vm.Push(constantValue)
+		case OP_NOT:
+			vm.Push(NewBoolVal(vm.IsFalsy(vm.Pop())))
+		case OP_NIL:
+			vm.Push(NewNilVal())
+		case OP_FALSE:
+			vm.Push(NewBoolVal(false))
+		case OP_TRUE:
+			vm.Push(NewBoolVal(true))
 		case OP_NEGATE:
-			vm.Push(-vm.Pop())
+			if !vm.Peek(0).IsNumber() {
+				vm.runtimeError("Operand must be a number.")
+				return INTERPRET_RUNTIME_ERROR
+			}
+
+			vm.Push(NewNumberVal(-*vm.Pop().AsNumber()))
+		case OP_EQUAL:
+			b := vm.Pop()
+			a := vm.Pop()
+
+			vm.Push(NewBoolVal(vm.valuesEqual(a, b)))
 		case OP_ADD:
 			BinaryOp(vm, instruction)
 		case OP_SUBTRACT:
@@ -162,4 +191,26 @@ func (vm *VM) Pop() Value {
 
 func (vm *VM) Peek(distance int) Value {
 	return vm.stack[vm.stackTop-distance-1]
+}
+
+func (vm *VM) runtimeError(format string, a ...any) {
+	line := vm.chunk.GetLine(vm.ip)
+	fmt.Printf("[line %d] : "+format+"\n", line, a)
+}
+
+func (vm *VM) valuesEqual(a Value, b Value) bool {
+	if a.Type != b.Type {
+		return false
+	}
+
+	switch a.Type {
+	case VAL_NIL:
+		return true
+	case VAL_BOOL:
+		return *a.AsBool() == *b.AsBool()
+	case VAL_NUMBER:
+		return *a.AsNumber() == *b.AsNumber()
+	default:
+		return false
+	}
 }

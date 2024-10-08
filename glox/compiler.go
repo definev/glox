@@ -45,31 +45,31 @@ func init() {
 		TOKEN_SEMICOLON:     {prefix: nil, infix: nil, precedence: PREC_NONE},
 		TOKEN_SLASH:         {prefix: nil, infix: parser.binary, precedence: PREC_FACTOR},
 		TOKEN_STAR:          {prefix: nil, infix: parser.binary, precedence: PREC_FACTOR},
-		TOKEN_BANG:          {prefix: nil, infix: nil, precedence: PREC_NONE},
-		TOKEN_BANG_EQUAL:    {prefix: nil, infix: nil, precedence: PREC_NONE},
+		TOKEN_BANG:          {prefix: parser.unary, infix: nil, precedence: PREC_NONE},
+		TOKEN_BANG_EQUAL:    {prefix: nil, infix: parser.binary, precedence: PREC_EQUALITY},
 		TOKEN_EQUAL:         {prefix: nil, infix: nil, precedence: PREC_NONE},
-		TOKEN_EQUAL_EQUAL:   {prefix: nil, infix: nil, precedence: PREC_NONE},
-		TOKEN_GREATER:       {prefix: nil, infix: nil, precedence: PREC_NONE},
-		TOKEN_GREATER_EQUAL: {prefix: nil, infix: nil, precedence: PREC_NONE},
-		TOKEN_LESS:          {prefix: nil, infix: nil, precedence: PREC_NONE},
-		TOKEN_LESS_EQUAL:    {prefix: nil, infix: nil, precedence: PREC_NONE},
+		TOKEN_EQUAL_EQUAL:   {prefix: nil, infix: parser.binary, precedence: PREC_EQUALITY},
+		TOKEN_GREATER:       {prefix: nil, infix: parser.binary, precedence: PREC_COMPARISON},
+		TOKEN_GREATER_EQUAL: {prefix: nil, infix: parser.binary, precedence: PREC_COMPARISON},
+		TOKEN_LESS:          {prefix: nil, infix: parser.binary, precedence: PREC_COMPARISON},
+		TOKEN_LESS_EQUAL:    {prefix: nil, infix: parser.binary, precedence: PREC_COMPARISON},
 		TOKEN_IDENTIFIER:    {prefix: nil, infix: nil, precedence: PREC_NONE},
 		TOKEN_STRING:        {prefix: nil, infix: nil, precedence: PREC_NONE},
 		TOKEN_NUMBER:        {prefix: parser.number, infix: nil, precedence: PREC_NONE},
 		TOKEN_AND:           {prefix: nil, infix: nil, precedence: PREC_NONE},
 		TOKEN_CLASS:         {prefix: nil, infix: nil, precedence: PREC_NONE},
 		TOKEN_ELSE:          {prefix: nil, infix: nil, precedence: PREC_NONE},
-		TOKEN_FALSE:         {prefix: nil, infix: nil, precedence: PREC_NONE},
+		TOKEN_FALSE:         {prefix: parser.literal, infix: nil, precedence: PREC_NONE},
 		TOKEN_FOR:           {prefix: nil, infix: nil, precedence: PREC_NONE},
 		TOKEN_FUN:           {prefix: nil, infix: nil, precedence: PREC_NONE},
 		TOKEN_IF:            {prefix: nil, infix: nil, precedence: PREC_NONE},
-		TOKEN_NIL:           {prefix: nil, infix: nil, precedence: PREC_NONE},
+		TOKEN_NIL:           {prefix: parser.literal, infix: nil, precedence: PREC_NONE},
 		TOKEN_OR:            {prefix: nil, infix: nil, precedence: PREC_NONE},
 		TOKEN_PRINT:         {prefix: nil, infix: nil, precedence: PREC_NONE},
 		TOKEN_RETURN:        {prefix: nil, infix: nil, precedence: PREC_NONE},
 		TOKEN_SUPER:         {prefix: nil, infix: nil, precedence: PREC_NONE},
 		TOKEN_THIS:          {prefix: nil, infix: nil, precedence: PREC_NONE},
-		TOKEN_TRUE:          {prefix: nil, infix: nil, precedence: PREC_NONE},
+		TOKEN_TRUE:          {prefix: parser.literal, infix: nil, precedence: PREC_NONE},
 		TOKEN_VAR:           {prefix: nil, infix: nil, precedence: PREC_NONE},
 		TOKEN_WHILE:         {prefix: nil, infix: nil, precedence: PREC_NONE},
 		TOKEN_ERROR:         {prefix: nil, infix: nil, precedence: PREC_NONE},
@@ -160,22 +160,22 @@ func (parser *Parser) consume(tokenType TokenType, message string) {
 }
 
 func (parser *Parser) emitByte(Byte byte) {
-	chunk := parser.complierChunk
-	chunk.Write(Byte, parser.current.line)
+	parser.complierChunk.Write(Byte, parser.current.line)
 }
 
-func (parser *Parser) emitBytes(byte1 byte, byte2 byte) {
-	parser.emitByte(byte1)
-	parser.emitByte(byte2)
+func (parser *Parser) emitBytes(bytes ...byte) {
+	for _, Byte := range bytes {
+		parser.complierChunk.Write(Byte, parser.current.line)
+	}
 }
 
 func (parser *Parser) endCompiler() {
+	parser.emitReturn()
 	if DEBUG_PRINT_CODE {
 		if !parser.hadError {
 			parser.complierChunk.DisassembleChunk("code")
 		}
 	}
-	parser.emitReturn()
 }
 
 func (parser *Parser) emitReturn() {
@@ -193,7 +193,7 @@ func (parser *Parser) expression() {
 
 func (parser *Parser) number() {
 	value, _ := strconv.ParseFloat(parser.previous.value, 64)
-	parser.emitConstant(Value(value))
+	parser.emitConstant(NewNumberVal(value))
 }
 
 func (parser *Parser) grouping() {
@@ -209,6 +209,8 @@ func (parser *Parser) unary() {
 
 	// Emit the operator instruction.
 	switch operationType {
+	case TOKEN_BANG:
+		parser.emitByte(OP_NOT)
 	case TOKEN_MINUS:
 		parser.emitByte(OP_NEGATE)
 	default:
@@ -231,6 +233,18 @@ func (parser *Parser) binary() {
 		parser.emitByte(OP_MULTIPLY)
 	case TOKEN_SLASH:
 		parser.emitByte(OP_DIVIDE)
+	case TOKEN_EQUAL_EQUAL:
+		parser.emitByte(OP_EQUAL)
+	case TOKEN_BANG_EQUAL:
+		parser.emitBytes(OP_EQUAL, OP_NOT)
+	case TOKEN_GREATER:
+		parser.emitByte(OP_GREATER)
+	case TOKEN_GREATER_EQUAL:
+		parser.emitBytes(OP_LESS, OP_NOT)
+	case TOKEN_LESS:
+		parser.emitByte(OP_LESS)
+	case TOKEN_LESS_EQUAL:
+		parser.emitBytes(OP_GREATER, OP_NOT)
 	default:
 		return // Unreachable.
 	}
@@ -249,5 +263,16 @@ func (parser *Parser) parsePrecedence(precedence Precedence) {
 		parser.advance()
 		infix := getRule(parser.previous.tokenType).infix
 		infix()
+	}
+}
+
+func (parser *Parser) literal() {
+	switch parser.previous.tokenType {
+	case TOKEN_NIL:
+		parser.emitByte(OP_NIL)
+	case TOKEN_FALSE:
+		parser.emitByte(OP_FALSE)
+	case TOKEN_TRUE:
+		parser.emitByte(OP_TRUE)
 	}
 }

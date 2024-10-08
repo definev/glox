@@ -3,7 +3,7 @@ package glox
 import "fmt"
 
 const DEBUG_TRACE_EXECUTION = true
-const DEBUG_PRINT_CODE = false
+const DEBUG_PRINT_CODE = true
 
 func (c *Chunk) DisassembleChunk(name string) {
 	fmt.Printf("== %s ==\n", name)
@@ -11,6 +11,9 @@ func (c *Chunk) DisassembleChunk(name string) {
 	for offset := 0; offset < c.Count; {
 		offset = c.DisassembleInstruction(offset)
 	}
+
+	fmt.Printf("%4d    | ", c.Count)
+	simpleInstruction("OP_DONE", c.Count-1)
 }
 
 func (c *Chunk) DisassembleInstruction(offset int) int {
@@ -41,6 +44,20 @@ func (c *Chunk) DisassembleInstruction(offset int) int {
 		return simpleInstruction("OP_MULTIPLY", offset)
 	case OP_DIVIDE:
 		return simpleInstruction("OP_DIVIDE", offset)
+	case OP_NIL:
+		return simpleInstruction("OP_NIL", offset)
+	case OP_FALSE:
+		return simpleInstruction("OP_FALSE", offset)
+	case OP_TRUE:
+		return simpleInstruction("OP_TRUE", offset)
+	case OP_NOT:
+		return simpleInstruction("OP_NOT", offset)
+	case OP_EQUAL:
+		return simpleInstruction("OP_EQUAL", offset)
+	case OP_GREATER:
+		return simpleInstruction("OP_GREATER", offset)
+	case OP_LESS:
+		return simpleInstruction("OP_LESS", offset)
 	default:
 		fmt.Println("Unknown opcode")
 		return offset + 1

@@ -10,13 +10,17 @@ func (c *Chunk) WriteConstant(value Value, Line int) {
 	constant := c.AddConstant(value)
 
 	constantBytes := make([]byte, 3)
-	constantBytes[0] = byte(constant >> 16)
-	constantBytes[1] = byte(constant >> 8)
-	constantBytes[2] = byte(constant)
+	for i := 0; i < 3; i++ {
+		constantBytes[i] = byte(constant >> (8 * (2 - i)))
+		c.Write(constantBytes[i], Line)
+	}
+	// constantBytes[0] = byte(constant >> 16)
+	// constantBytes[1] = byte(constant >> 8)
+	// constantBytes[2] = byte(constant)
 
-	c.Write(constantBytes[0], Line)
-	c.Write(constantBytes[1], Line)
-	c.Write(constantBytes[2], Line)
+	// c.Write(constantBytes[0], Line)
+	// c.Write(constantBytes[1], Line)
+	// c.Write(constantBytes[2], Line)
 }
 
 func (c *Chunk) ReadConstantLong(offset int) int {
