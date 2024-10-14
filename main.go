@@ -50,6 +50,6 @@ func main() {
 	vm := glox.NewVM()
 
 	vm.Init()
-	vm.Interpret("10 == 10")
+	vm.Interpret("\"st\" + \"ri\" + \"ng\"")
 	vm.Free()
 }

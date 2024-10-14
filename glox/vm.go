@@ -16,6 +16,17 @@ const (
 	STACK_MAX = 256
 )
 
+func Concatenate(vm *VM) {
+	b := *vm.Pop().AsString()
+	a := *vm.Pop().AsString()
+
+	result := make([]byte, len(a.Chars)+len(b.Chars))
+	copy(result, a.Chars)
+	copy(result[len(a.Chars):], b.Chars)
+
+	vm.Push(NewObjVal(NewObjString(string(result))))
+}
+
 func BinaryOp(vm *VM, op byte) InterpretResult {
 	if !vm.Peek(0).IsNumber() || !vm.Peek(1).IsNumber() {
 		vm.runtimeError("Operands must be numbers.")
@@ -48,6 +59,7 @@ type VM struct {
 	ip       int
 	stack    []Value
 	stackTop int
+	Objects  []*Obj
 }
 
 func NewVM() *VM {
@@ -57,6 +69,7 @@ func NewVM() *VM {
 func (vm *VM) Init() {
 	vm.stack = make([]Value, STACK_MAX)
 	vm.stackTop = 0
+	vm.Objects = make([]*Obj, 0)
 }
 
 func (vm *VM) Free() {}
@@ -162,9 +175,13 @@ func (vm *VM) Run() InterpretResult {
 			b := vm.Pop()
 			a := vm.Pop()
 
-			vm.Push(NewBoolVal(vm.valuesEqual(a, b)))
+			vm.Push(NewBoolVal(a.IsEqual(b)))
 		case OP_ADD:
-			BinaryOp(vm, instruction)
+			if vm.Peek(0).IsString() && vm.Peek(1).IsString() {
+				Concatenate(vm)
+			} else {
+				BinaryOp(vm, instruction)
+			}
 		case OP_SUBTRACT:
 			BinaryOp(vm, instruction)
 		case OP_MULTIPLY:
@@ -196,21 +213,4 @@ func (vm *VM) Peek(distance int) Value {
 func (vm *VM) runtimeError(format string, a ...any) {
 	line := vm.chunk.GetLine(vm.ip)
 	fmt.Printf("[line %d] : "+format+"\n", line, a)
-}
-
-func (vm *VM) valuesEqual(a Value, b Value) bool {
-	if a.Type != b.Type {
-		return false
-	}
-
-	switch a.Type {
-	case VAL_NIL:
-		return true
-	case VAL_BOOL:
-		return *a.AsBool() == *b.AsBool()
-	case VAL_NUMBER:
-		return *a.AsNumber() == *b.AsNumber()
-	default:
-		return false
-	}
 }

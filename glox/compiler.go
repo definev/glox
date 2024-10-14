@@ -54,7 +54,7 @@ func init() {
 		TOKEN_LESS:          {prefix: nil, infix: parser.binary, precedence: PREC_COMPARISON},
 		TOKEN_LESS_EQUAL:    {prefix: nil, infix: parser.binary, precedence: PREC_COMPARISON},
 		TOKEN_IDENTIFIER:    {prefix: nil, infix: nil, precedence: PREC_NONE},
-		TOKEN_STRING:        {prefix: nil, infix: nil, precedence: PREC_NONE},
+		TOKEN_STRING:        {prefix: parser.string, infix: nil, precedence: PREC_NONE},
 		TOKEN_NUMBER:        {prefix: parser.number, infix: nil, precedence: PREC_NONE},
 		TOKEN_AND:           {prefix: nil, infix: nil, precedence: PREC_NONE},
 		TOKEN_CLASS:         {prefix: nil, infix: nil, precedence: PREC_NONE},
@@ -275,4 +275,9 @@ func (parser *Parser) literal() {
 	case TOKEN_TRUE:
 		parser.emitByte(OP_TRUE)
 	}
+}
+
+func (parser *Parser) string() {
+	str := parser.previous.value[1 : len(parser.previous.value)-1]
+	parser.emitConstant(NewObjVal(NewObjString(str)))
 }
