@@ -1,6 +1,8 @@
 package glox
 
-import "fmt"
+import (
+	"fmt"
+)
 
 const DEBUG_TRACE_EXECUTION = true
 const DEBUG_PRINT_CODE = true
@@ -28,12 +30,16 @@ func (c *Chunk) DisassembleInstruction(offset int) int {
 	instruction := (*c.Code)[offset]
 
 	switch instruction {
+	case OP_POP:
+		return simpleInstruction("OP_POP", offset)
+	case OP_PRINT:
+		return simpleInstruction("OP_PRINT", offset)
 	case OP_RETURN:
 		return simpleInstruction("OP_RETURN", offset)
-	case OP_CONSTANT:
-		return constantInstruction("OP_CONSTANT", c, offset)
 	case OP_CONSTANT_LONG:
-		return constantLongInstruction("OP_CONSTANT_LONG", c, offset)
+		return constantInstruction("OP_CONSTANT_LONG", c, offset)
+	case OP_DEFINE_GLOBAL:
+		return constantInstruction("OP_DEFINE_GLOBAL", c, offset)
 	case OP_NEGATE:
 		return simpleInstruction("OP_NEGATE", offset)
 	case OP_ADD:
@@ -70,15 +76,7 @@ func simpleInstruction(name string, offset int) int {
 }
 
 func constantInstruction(name string, c *Chunk, offset int) int {
-	constant := (*c.Code)[offset+1]
-	fmt.Printf("%-16s %4d '", name, constant)
-	c.Constants.Print(int(constant))
-	fmt.Printf("'\n")
-	return offset + 2
-}
-
-func constantLongInstruction(name string, c *Chunk, offset int) int {
-	constant := c.ReadConstantLong(offset + 1)
+	constant := c.ReadConstant(offset + 1)
 
 	fmt.Printf("%-16s %4d '", name, constant)
 	c.Constants.Print(int(constant))

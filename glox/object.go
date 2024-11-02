@@ -14,6 +14,16 @@ type ObjString struct {
 	Hash   uint32
 }
 
+func (o ObjString) IsEqual(other ObjString) bool {
+	if o.Length != other.Length {
+		return false
+	}
+	if o.Hash != other.Hash {
+		return false
+	}
+	return string(o.Chars) == string(other.Chars)
+}
+
 func (o ObjString) GetObjType() ObjType {
 	return OBJ_STRING
 }

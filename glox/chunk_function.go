@@ -1,5 +1,13 @@
 package glox
 
+func SplitConstant(value int) (byte, byte, byte) {
+	constant0 := byte(value >> 16)
+	constant1 := byte(value >> 8)
+	constant2 := byte(value)
+
+	return constant0, constant1, constant2
+}
+
 func (c *Chunk) AddConstant(value Value) int {
 	c.Constants.Write(value)
 	return c.Constants.Count - 1
@@ -8,22 +16,13 @@ func (c *Chunk) AddConstant(value Value) int {
 func (c *Chunk) WriteConstant(value Value, Line int) {
 	c.Write(OP_CONSTANT_LONG, Line)
 	constant := c.AddConstant(value)
-
-	constantBytes := make([]byte, 3)
-	for i := 0; i < 3; i++ {
-		constantBytes[i] = byte(constant >> (8 * (2 - i)))
-		c.Write(constantBytes[i], Line)
-	}
-	// constantBytes[0] = byte(constant >> 16)
-	// constantBytes[1] = byte(constant >> 8)
-	// constantBytes[2] = byte(constant)
-
-	// c.Write(constantBytes[0], Line)
-	// c.Write(constantBytes[1], Line)
-	// c.Write(constantBytes[2], Line)
+	constant0, constant1, constant2 := SplitConstant(constant)
+	c.Write(byte(constant0), Line)
+	c.Write(byte(constant1), Line)
+	c.Write(byte(constant2), Line)
 }
 
-func (c *Chunk) ReadConstantLong(offset int) int {
+func (c *Chunk) ReadConstant(offset int) int {
 	constant0 := (*c.Code)[offset]
 	constant1 := (*c.Code)[offset+1]
 	constant2 := (*c.Code)[offset+2]

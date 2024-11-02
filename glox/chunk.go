@@ -2,7 +2,6 @@ package glox
 
 const (
 	OP_RETURN byte = iota
-	OP_CONSTANT
 	OP_CONSTANT_LONG
 	OP_NIL
 	OP_TRUE
@@ -16,6 +15,9 @@ const (
 	OP_DIVIDE
 	OP_NEGATE
 	OP_NOT
+	OP_PRINT
+	OP_POP
+	OP_DEFINE_GLOBAL
 )
 
 type line struct {

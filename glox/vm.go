@@ -60,6 +60,7 @@ type VM struct {
 	stack    []Value
 	stackTop int
 	Objects  []*Obj
+	globals  Table
 }
 
 func NewVM() *VM {
@@ -70,9 +71,14 @@ func (vm *VM) Init() {
 	vm.stack = make([]Value, STACK_MAX)
 	vm.stackTop = 0
 	vm.Objects = make([]*Obj, 0)
+	vm.globals.Init()
 }
 
-func (vm *VM) Free() {}
+func (vm *VM) Free() {
+	vm.stack = nil
+	vm.Objects = nil
+	vm.globals.Free()
+}
 
 func (vm *VM) Interpret(source string) InterpretResult {
 	chunk := NewChunk()
@@ -95,18 +101,20 @@ func (vm *VM) Interpret(source string) InterpretResult {
 func (vm *VM) Compile(source string, chunk *Chunk) bool {
 	scanner.initScanner(source)
 
-	parser.complierChunk = chunk
+	compiler.complierChunk = chunk
 
-	parser.hadError = false
-	parser.panicMode = false
+	compiler.hadError = false
+	compiler.panicMode = false
 
-	parser.advance()
-	parser.expression()
+	compiler.advance()
 
-	parser.consume(TOKEN_EOF, "Expect end of expression.")
-	parser.endCompiler()
+	for !compiler.match(TOKEN_EOF) {
+		compiler.declaration()
+	}
 
-	return !parser.hadError
+	compiler.endCompiler()
+
+	return !compiler.hadError
 }
 
 func (vm *VM) ReadByte() (byte, error) {
@@ -116,25 +124,34 @@ func (vm *VM) ReadByte() (byte, error) {
 	value := (*vm.chunk.Code)[vm.ip]
 	vm.ip++
 	return value, nil
-
 }
 
 func (vm *VM) IsFalsy(value Value) bool {
 	return value.IsNil() || (value.IsBool() && !*value.AsBool())
 }
 
+func (vm *VM) disassembleVM() {
+	fmt.Printf("          ")
+	for i := 0; i < vm.stackTop; i++ {
+		slot := vm.stack[i]
+		fmt.Printf("[ ")
+		PrintValue(slot)
+		fmt.Printf(" ]")
+	}
+	fmt.Printf("\n")
+	vm.chunk.DisassembleInstruction(vm.ip)
+}
+
+func (vm *VM) ReadConstant() int {
+	constant := vm.chunk.ReadConstant(vm.ip)
+	vm.ip = vm.ip + 3
+	return constant
+}
+
 func (vm *VM) Run() InterpretResult {
 	for {
 		if DEBUG_TRACE_EXECUTION {
-			fmt.Printf("          ")
-			for i := 0; i < vm.stackTop; i++ {
-				slot := vm.stack[i]
-				fmt.Printf("[ ")
-				PrintValue(slot)
-				fmt.Printf(" ]")
-			}
-			fmt.Printf("\n")
-			vm.chunk.DisassembleInstruction(vm.ip)
+			vm.disassembleVM()
 		}
 
 		instruction, err := vm.ReadByte()
@@ -143,17 +160,20 @@ func (vm *VM) Run() InterpretResult {
 		}
 
 		switch instruction {
-		case OP_RETURN:
+		case OP_DEFINE_GLOBAL:
+			nameConstant := vm.ReadConstant()
+			nameValue := (*vm.chunk.Constants.Values)[nameConstant].AsString()
+			vm.globals.Set(nameValue, vm.Peek(0))
+			vm.Pop()
+		case OP_POP:
+			vm.Pop()
+		case OP_PRINT:
 			PrintValue(vm.Pop())
 			fmt.Printf("\n")
+		case OP_RETURN:
 			return INTERPRET_OK
-		case OP_CONSTANT:
-			constant, _ := vm.ReadByte()
-			constantValue := (*vm.chunk.Constants.Values)[constant]
-			vm.Push(constantValue)
 		case OP_CONSTANT_LONG:
-			constant := vm.chunk.ReadConstantLong(vm.ip)
-			vm.ip = vm.ip + 3
+			constant := vm.ReadConstant()
 			constantValue := (*vm.chunk.Constants.Values)[constant]
 			vm.Push(constantValue)
 		case OP_NOT:

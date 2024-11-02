@@ -34,42 +34,42 @@ var rules map[TokenType]ParseRule
 
 func init() {
 	rules = map[TokenType]ParseRule{
-		TOKEN_LEFT_PAREN:    {prefix: parser.grouping, infix: nil, precedence: PREC_NONE},
+		TOKEN_LEFT_PAREN:    {prefix: compiler.grouping, infix: nil, precedence: PREC_NONE},
 		TOKEN_RIGHT_PAREN:   {prefix: nil, infix: nil, precedence: PREC_NONE},
 		TOKEN_LEFT_BRACE:    {prefix: nil, infix: nil, precedence: PREC_NONE},
 		TOKEN_RIGHT_BRACE:   {prefix: nil, infix: nil, precedence: PREC_NONE},
 		TOKEN_COMMA:         {prefix: nil, infix: nil, precedence: PREC_NONE},
 		TOKEN_DOT:           {prefix: nil, infix: nil, precedence: PREC_NONE},
-		TOKEN_MINUS:         {prefix: parser.unary, infix: parser.binary, precedence: PREC_TERM},
-		TOKEN_PLUS:          {prefix: nil, infix: parser.binary, precedence: PREC_TERM},
+		TOKEN_MINUS:         {prefix: compiler.unary, infix: compiler.binary, precedence: PREC_TERM},
+		TOKEN_PLUS:          {prefix: nil, infix: compiler.binary, precedence: PREC_TERM},
 		TOKEN_SEMICOLON:     {prefix: nil, infix: nil, precedence: PREC_NONE},
-		TOKEN_SLASH:         {prefix: nil, infix: parser.binary, precedence: PREC_FACTOR},
-		TOKEN_STAR:          {prefix: nil, infix: parser.binary, precedence: PREC_FACTOR},
-		TOKEN_BANG:          {prefix: parser.unary, infix: nil, precedence: PREC_NONE},
-		TOKEN_BANG_EQUAL:    {prefix: nil, infix: parser.binary, precedence: PREC_EQUALITY},
+		TOKEN_SLASH:         {prefix: nil, infix: compiler.binary, precedence: PREC_FACTOR},
+		TOKEN_STAR:          {prefix: nil, infix: compiler.binary, precedence: PREC_FACTOR},
+		TOKEN_BANG:          {prefix: compiler.unary, infix: nil, precedence: PREC_NONE},
+		TOKEN_BANG_EQUAL:    {prefix: nil, infix: compiler.binary, precedence: PREC_EQUALITY},
 		TOKEN_EQUAL:         {prefix: nil, infix: nil, precedence: PREC_NONE},
-		TOKEN_EQUAL_EQUAL:   {prefix: nil, infix: parser.binary, precedence: PREC_EQUALITY},
-		TOKEN_GREATER:       {prefix: nil, infix: parser.binary, precedence: PREC_COMPARISON},
-		TOKEN_GREATER_EQUAL: {prefix: nil, infix: parser.binary, precedence: PREC_COMPARISON},
-		TOKEN_LESS:          {prefix: nil, infix: parser.binary, precedence: PREC_COMPARISON},
-		TOKEN_LESS_EQUAL:    {prefix: nil, infix: parser.binary, precedence: PREC_COMPARISON},
+		TOKEN_EQUAL_EQUAL:   {prefix: nil, infix: compiler.binary, precedence: PREC_EQUALITY},
+		TOKEN_GREATER:       {prefix: nil, infix: compiler.binary, precedence: PREC_COMPARISON},
+		TOKEN_GREATER_EQUAL: {prefix: nil, infix: compiler.binary, precedence: PREC_COMPARISON},
+		TOKEN_LESS:          {prefix: nil, infix: compiler.binary, precedence: PREC_COMPARISON},
+		TOKEN_LESS_EQUAL:    {prefix: nil, infix: compiler.binary, precedence: PREC_COMPARISON},
 		TOKEN_IDENTIFIER:    {prefix: nil, infix: nil, precedence: PREC_NONE},
-		TOKEN_STRING:        {prefix: parser.string, infix: nil, precedence: PREC_NONE},
-		TOKEN_NUMBER:        {prefix: parser.number, infix: nil, precedence: PREC_NONE},
+		TOKEN_STRING:        {prefix: compiler.string, infix: nil, precedence: PREC_NONE},
+		TOKEN_NUMBER:        {prefix: compiler.number, infix: nil, precedence: PREC_NONE},
 		TOKEN_AND:           {prefix: nil, infix: nil, precedence: PREC_NONE},
 		TOKEN_CLASS:         {prefix: nil, infix: nil, precedence: PREC_NONE},
 		TOKEN_ELSE:          {prefix: nil, infix: nil, precedence: PREC_NONE},
-		TOKEN_FALSE:         {prefix: parser.literal, infix: nil, precedence: PREC_NONE},
+		TOKEN_FALSE:         {prefix: compiler.literal, infix: nil, precedence: PREC_NONE},
 		TOKEN_FOR:           {prefix: nil, infix: nil, precedence: PREC_NONE},
 		TOKEN_FUN:           {prefix: nil, infix: nil, precedence: PREC_NONE},
 		TOKEN_IF:            {prefix: nil, infix: nil, precedence: PREC_NONE},
-		TOKEN_NIL:           {prefix: parser.literal, infix: nil, precedence: PREC_NONE},
+		TOKEN_NIL:           {prefix: compiler.literal, infix: nil, precedence: PREC_NONE},
 		TOKEN_OR:            {prefix: nil, infix: nil, precedence: PREC_NONE},
 		TOKEN_PRINT:         {prefix: nil, infix: nil, precedence: PREC_NONE},
 		TOKEN_RETURN:        {prefix: nil, infix: nil, precedence: PREC_NONE},
 		TOKEN_SUPER:         {prefix: nil, infix: nil, precedence: PREC_NONE},
 		TOKEN_THIS:          {prefix: nil, infix: nil, precedence: PREC_NONE},
-		TOKEN_TRUE:          {prefix: parser.literal, infix: nil, precedence: PREC_NONE},
+		TOKEN_TRUE:          {prefix: compiler.literal, infix: nil, precedence: PREC_NONE},
 		TOKEN_VAR:           {prefix: nil, infix: nil, precedence: PREC_NONE},
 		TOKEN_WHILE:         {prefix: nil, infix: nil, precedence: PREC_NONE},
 		TOKEN_ERROR:         {prefix: nil, infix: nil, precedence: PREC_NONE},
@@ -100,7 +100,7 @@ func Compile(source string) {
 	}
 }
 
-type Parser struct {
+type Compiler struct {
 	previous      Token
 	current       Token
 	hadError      bool
@@ -108,34 +108,34 @@ type Parser struct {
 	complierChunk *Chunk
 }
 
-var parser Parser
+var compiler Compiler
 
-func (parser *Parser) advance() {
-	parser.previous = parser.current
+func (compiler *Compiler) advance() {
+	compiler.previous = compiler.current
 
 	for {
-		parser.current = scanner.scanToken()
-		if parser.current.tokenType != TOKEN_ERROR {
+		compiler.current = scanner.scanToken()
+		if compiler.current.tokenType != TOKEN_ERROR {
 			break
 		}
 
-		parser.errorAtCurrent(parser.current.value)
+		compiler.errorAtCurrent(compiler.current.value)
 	}
 }
 
-func (parser *Parser) errorAtCurrent(message string) {
-	parser.errorAt(&parser.current, message)
+func (compiler *Compiler) errorAtCurrent(message string) {
+	compiler.errorAt(&compiler.current, message)
 }
 
-func (parser *Parser) error(message string) {
-	parser.errorAt(&parser.previous, message)
+func (compiler *Compiler) error(message string) {
+	compiler.errorAt(&compiler.previous, message)
 }
 
-func (parser *Parser) errorAt(token *Token, message string) {
-	if parser.panicMode {
+func (compiler *Compiler) errorAt(token *Token, message string) {
+	if compiler.panicMode {
 		return
 	}
-	parser.panicMode = true
+	compiler.panicMode = true
 
 	fmt.Fprintf(os.Stderr, "[line %d] Error", token.line)
 
@@ -150,134 +150,218 @@ func (parser *Parser) errorAt(token *Token, message string) {
 	fmt.Fprintf(os.Stderr, ": %s\n", message)
 }
 
-func (parser *Parser) consume(tokenType TokenType, message string) {
-	if parser.current.tokenType == tokenType {
-		parser.advance()
+func (compiler *Compiler) check(tokenType TokenType) bool {
+	return compiler.current.tokenType == tokenType
+}
+
+func (compiler *Compiler) match(tokenType TokenType) bool {
+	if !compiler.check(tokenType) {
+		return false
+	}
+	compiler.advance()
+	return true
+}
+
+func (compiler *Compiler) consume(tokenType TokenType, message string) {
+	if compiler.current.tokenType == tokenType {
+		compiler.advance()
 		return
 	}
 
-	parser.errorAtCurrent(message)
+	compiler.errorAtCurrent(message)
 }
 
-func (parser *Parser) emitByte(Byte byte) {
-	parser.complierChunk.Write(Byte, parser.current.line)
+func (compiler *Compiler) emitByte(Byte byte) {
+	compiler.complierChunk.Write(Byte, compiler.current.line)
 }
 
-func (parser *Parser) emitBytes(bytes ...byte) {
+func (compiler *Compiler) emitBytes(bytes ...byte) {
 	for _, Byte := range bytes {
-		parser.complierChunk.Write(Byte, parser.current.line)
+		compiler.complierChunk.Write(Byte, compiler.current.line)
 	}
 }
 
-func (parser *Parser) endCompiler() {
-	parser.emitReturn()
+func (compiler *Compiler) endCompiler() {
+	compiler.emitReturn()
 	if DEBUG_PRINT_CODE {
-		if !parser.hadError {
-			parser.complierChunk.DisassembleChunk("code")
+		if !compiler.hadError {
+			compiler.complierChunk.DisassembleChunk("code")
 		}
 	}
 }
 
-func (parser *Parser) emitReturn() {
-	parser.emitByte(OP_RETURN)
+func (compiler *Compiler) emitReturn() {
+	compiler.emitByte(OP_RETURN)
 }
 
-func (parser *Parser) emitConstant(value Value) {
-	chunk := parser.complierChunk
-	chunk.WriteConstant(value, parser.previous.line)
+func (compiler *Compiler) emitConstant(value Value) {
+	compiler.complierChunk.WriteConstant(value, compiler.previous.line)
 }
 
-func (parser *Parser) expression() {
-	parser.parsePrecedence(PREC_ASSIGNMENT)
+func (compiler *Compiler) identifierConstant(token *Token) int {
+	return compiler.complierChunk.AddConstant(NewObjVal(NewObjString(token.value)))
 }
 
-func (parser *Parser) number() {
-	value, _ := strconv.ParseFloat(parser.previous.value, 64)
-	parser.emitConstant(NewNumberVal(value))
+func (compiler *Compiler) defineVariable(global int) {
+	constant0, constant1, constant2 := SplitConstant(global)
+	compiler.emitBytes(OP_DEFINE_GLOBAL, constant0, constant1, constant2)
 }
 
-func (parser *Parser) grouping() {
-	parser.expression()
-	parser.consume(TOKEN_RIGHT_PAREN, "Expect ')' after expression.")
+func (compiler *Compiler) parseVariable(errorMessage string) int {
+	compiler.consume(TOKEN_IDENTIFIER, errorMessage)
+	return compiler.identifierConstant(&compiler.previous)
 }
 
-func (parser *Parser) unary() {
-	operationType := parser.previous.tokenType
+func (compiler *Compiler) varDeclaration() {
+	global := compiler.parseVariable("Expect variable name.")
+
+	if compiler.match(TOKEN_EQUAL) {
+		compiler.expression()
+	} else {
+		compiler.emitByte(OP_NIL)
+	}
+
+	compiler.consume(TOKEN_SEMICOLON, "Expect ';' after variable declaration.")
+	compiler.defineVariable(global)
+}
+
+func (compiler *Compiler) declaration() {
+	if compiler.match(TOKEN_VAR) {
+		compiler.varDeclaration()
+	} else {
+		compiler.statement()
+	}
+	if compiler.panicMode {
+		compiler.synchronize()
+	}
+}
+
+func (compiler *Compiler) printStatement() {
+	compiler.expression()
+	compiler.consume(TOKEN_SEMICOLON, "Expect ';' after value.")
+	compiler.emitByte(OP_PRINT)
+}
+
+func (compiler *Compiler) synchronize() {
+	compiler.panicMode = false
+	for compiler.current.tokenType != TOKEN_EOF {
+		if compiler.previous.tokenType == TOKEN_SEMICOLON {
+			return
+		}
+		switch compiler.current.tokenType {
+		case TOKEN_CLASS, TOKEN_FUN, TOKEN_VAR, TOKEN_FOR, TOKEN_IF, TOKEN_WHILE, TOKEN_PRINT, TOKEN_RETURN:
+			return
+		}
+
+		compiler.advance()
+	}
+}
+
+func (compiler *Compiler) expressionStatement() {
+	compiler.expression()
+	compiler.consume(TOKEN_SEMICOLON, "Expect ';' after expression.")
+	compiler.emitByte(OP_POP)
+}
+
+func (compiler *Compiler) expression() {
+	compiler.parsePrecedence(PREC_ASSIGNMENT)
+}
+
+func (compiler *Compiler) statement() {
+	if compiler.match(TOKEN_PRINT) {
+		compiler.printStatement()
+	} else {
+		compiler.expressionStatement()
+	}
+}
+
+func (compiler *Compiler) number() {
+	value, _ := strconv.ParseFloat(compiler.previous.value, 64)
+	compiler.emitConstant(NewNumberVal(value))
+}
+
+func (compiler *Compiler) grouping() {
+	compiler.expression()
+	compiler.consume(TOKEN_RIGHT_PAREN, "Expect ')' after expression.")
+}
+
+func (compiler *Compiler) unary() {
+	operationType := compiler.previous.tokenType
 
 	// Compile the operand.
-	parser.parsePrecedence(PREC_UNARY)
+	compiler.parsePrecedence(PREC_UNARY)
 
 	// Emit the operator instruction.
 	switch operationType {
 	case TOKEN_BANG:
-		parser.emitByte(OP_NOT)
+		compiler.emitByte(OP_NOT)
 	case TOKEN_MINUS:
-		parser.emitByte(OP_NEGATE)
+		compiler.emitByte(OP_NEGATE)
 	default:
 		return // Unreachable.
 	}
 }
 
-func (parser *Parser) binary() {
-	operatorType := parser.previous.tokenType
+func (compiler *Compiler) binary() {
+	operatorType := compiler.previous.tokenType
 
 	rule := getRule(operatorType)
-	parser.parsePrecedence(Precedence(rule.precedence + 1))
+	compiler.parsePrecedence(Precedence(rule.precedence + 1))
 
 	switch operatorType {
 	case TOKEN_PLUS:
-		parser.emitByte(OP_ADD)
+		compiler.emitByte(OP_ADD)
 	case TOKEN_MINUS:
-		parser.emitByte(OP_SUBTRACT)
+		compiler.emitByte(OP_SUBTRACT)
 	case TOKEN_STAR:
-		parser.emitByte(OP_MULTIPLY)
+		compiler.emitByte(OP_MULTIPLY)
 	case TOKEN_SLASH:
-		parser.emitByte(OP_DIVIDE)
+		compiler.emitByte(OP_DIVIDE)
 	case TOKEN_EQUAL_EQUAL:
-		parser.emitByte(OP_EQUAL)
+		compiler.emitByte(OP_EQUAL)
 	case TOKEN_BANG_EQUAL:
-		parser.emitBytes(OP_EQUAL, OP_NOT)
+		compiler.emitBytes(OP_EQUAL, OP_NOT)
 	case TOKEN_GREATER:
-		parser.emitByte(OP_GREATER)
+		compiler.emitByte(OP_GREATER)
 	case TOKEN_GREATER_EQUAL:
-		parser.emitBytes(OP_LESS, OP_NOT)
+		compiler.emitBytes(OP_LESS, OP_NOT)
 	case TOKEN_LESS:
-		parser.emitByte(OP_LESS)
+		compiler.emitByte(OP_LESS)
 	case TOKEN_LESS_EQUAL:
-		parser.emitBytes(OP_GREATER, OP_NOT)
+		compiler.emitBytes(OP_GREATER, OP_NOT)
 	default:
 		return // Unreachable.
 	}
 }
 
-func (parser *Parser) parsePrecedence(precedence Precedence) {
-	parser.advance()
-	prefix := getRule(parser.previous.tokenType).prefix
+func (compiler *Compiler) parsePrecedence(precedence Precedence) {
+	compiler.advance()
+	prefix := getRule(compiler.previous.tokenType).prefix
 	if prefix == nil {
-		parser.error("Expect expression.")
+		compiler.error("Expect expression.")
 		return
 	}
 	prefix()
 
-	for precedence <= getRule(parser.current.tokenType).precedence {
-		parser.advance()
-		infix := getRule(parser.previous.tokenType).infix
+	for precedence <= getRule(compiler.current.tokenType).precedence {
+		compiler.advance()
+		infix := getRule(compiler.previous.tokenType).infix
 		infix()
 	}
 }
 
-func (parser *Parser) literal() {
-	switch parser.previous.tokenType {
+func (compiler *Compiler) literal() {
+	switch compiler.previous.tokenType {
 	case TOKEN_NIL:
-		parser.emitByte(OP_NIL)
+		compiler.emitByte(OP_NIL)
 	case TOKEN_FALSE:
-		parser.emitByte(OP_FALSE)
+		compiler.emitByte(OP_FALSE)
 	case TOKEN_TRUE:
-		parser.emitByte(OP_TRUE)
+		compiler.emitByte(OP_TRUE)
 	}
 }
 
-func (parser *Parser) string() {
-	str := parser.previous.value[1 : len(parser.previous.value)-1]
-	parser.emitConstant(NewObjVal(NewObjString(str)))
+func (compiler *Compiler) string() {
+	str := compiler.previous.value[1 : len(compiler.previous.value)-1]
+	compiler.emitConstant(NewObjVal(NewObjString(str)))
 }
