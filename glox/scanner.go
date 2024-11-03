@@ -53,9 +53,7 @@ func (scanner *Scanner) skipWhitespace() {
 
 		c := scanner.source[scanner.current]
 		switch c {
-		case ' ':
-		case '\r':
-		case '\t':
+		case ' ', '\r', '\t':
 			scanner.advance()
 		case '\n':
 			scanner.line += 1
@@ -72,7 +70,6 @@ func (scanner *Scanner) skipWhitespace() {
 		default:
 			return
 		}
-		scanner.current += 1
 	}
 }
 
@@ -127,7 +124,8 @@ func (scanner *Scanner) identifier() Token {
 }
 
 func (scanner *Scanner) checkKeyword(start, end int, last string, tokenType TokenType) TokenType {
-	if scanner.source[scanner.start+start:scanner.start+end] == last {
+	got := scanner.source[scanner.start+start : scanner.start+end]
+	if got == last {
 		return tokenType
 	}
 
@@ -137,27 +135,27 @@ func (scanner *Scanner) checkKeyword(start, end int, last string, tokenType Toke
 func (scanner *Scanner) identifierType() TokenType {
 	switch scanner.source[scanner.start] {
 	case 'a':
-		return scanner.checkKeyword(1, 2, "nd", TOKEN_AND)
+		return scanner.checkKeyword(1, 3, "nd", TOKEN_AND)
 	case 'c':
-		return scanner.checkKeyword(1, 4, "lass", TOKEN_CLASS)
+		return scanner.checkKeyword(1, 5, "lass", TOKEN_CLASS)
 	case 'e':
-		return scanner.checkKeyword(1, 3, "lse", TOKEN_ELSE)
+		return scanner.checkKeyword(1, 4, "lse", TOKEN_ELSE)
 	case 'i':
-		return scanner.checkKeyword(1, 1, "f", TOKEN_IF)
+		return scanner.checkKeyword(1, 2, "f", TOKEN_IF)
 	case 'n':
-		return scanner.checkKeyword(1, 2, "il", TOKEN_NIL)
+		return scanner.checkKeyword(1, 3, "il", TOKEN_NIL)
 	case 'o':
-		return scanner.checkKeyword(1, 1, "r", TOKEN_OR)
+		return scanner.checkKeyword(1, 2, "r", TOKEN_OR)
 	case 'p':
-		return scanner.checkKeyword(1, 4, "rint", TOKEN_PRINT)
+		return scanner.checkKeyword(1, 5, "rint", TOKEN_PRINT)
 	case 'r':
-		return scanner.checkKeyword(1, 5, "eturn", TOKEN_RETURN)
+		return scanner.checkKeyword(1, 6, "eturn", TOKEN_RETURN)
 	case 's':
-		return scanner.checkKeyword(1, 4, "uper", TOKEN_SUPER)
+		return scanner.checkKeyword(1, 5, "uper", TOKEN_SUPER)
 	case 'v':
-		return scanner.checkKeyword(1, 2, "ar", TOKEN_VAR)
+		return scanner.checkKeyword(1, 3, "ar", TOKEN_VAR)
 	case 'w':
-		return scanner.checkKeyword(1, 4, "hile", TOKEN_WHILE)
+		return scanner.checkKeyword(1, 5, "hile", TOKEN_WHILE)
 	case 'f':
 		if scanner.current-scanner.start > 1 {
 			switch scanner.source[scanner.start+1] {
@@ -220,7 +218,7 @@ func (scanner *Scanner) scanToken() Token {
 	scanner.skipWhitespace()
 
 	scanner.start = scanner.current
-	scanner.line = 1
+	// scanner.line = 1
 
 	if scanner.isAtEnd() {
 		return scanner.makeToken(TOKEN_EOF)
