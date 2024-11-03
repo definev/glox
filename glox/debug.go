@@ -40,6 +40,8 @@ func (c *Chunk) DisassembleInstruction(offset int) int {
 		return constantInstruction("OP_CONSTANT_LONG", c, offset)
 	case OP_DEFINE_GLOBAL:
 		return constantInstruction("OP_DEFINE_GLOBAL", c, offset)
+	case OP_GET_GLOBAL:
+		return constantInstruction("OP_GET_GLOBAL", c, offset)
 	case OP_NEGATE:
 		return simpleInstruction("OP_NEGATE", offset)
 	case OP_ADD:

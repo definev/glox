@@ -60,17 +60,17 @@ func (t *Table) SetAll(other *Table) {
 	}
 }
 
-func (t *Table) Get(key *ObjString) Value {
+func (t *Table) Get(key *ObjString) (Value, bool) {
 	if t.capacity == 0 {
-		return NewNilVal()
+		return NewNilVal(), false
 	}
 
 	entry := t.findEntry(t.Entries, key, t.capacity)
 	if entry.Key == nil {
-		return NewNilVal()
+		return NewNilVal(), false
 	}
 
-	return entry.Value
+	return entry.Value, true
 }
 
 func (t *Table) Delete(key *ObjString) bool {
@@ -120,22 +120,22 @@ func (t *Table) findEntry(entries []Entry, key *ObjString, capacity int) *Entry 
 	var tombstone *Entry = nil
 
 	for {
-		entry := entries[index]
+		entry := &entries[index]
 		if entry.Key == nil {
 			if entry.Value.IsNil() {
 				// Treat tombstone as empty slot
 				if tombstone != nil {
 					return tombstone
 				}
-				return &entry
+				return entry
 			} else {
 				if tombstone == nil {
-					tombstone = &entry
+					tombstone = entry
 				}
 			}
 		}
 		if entry.Key.IsEqual(*key) {
-			return &entry
+			return entry
 		}
 
 		index = (index + 1) % uint32(capacity)

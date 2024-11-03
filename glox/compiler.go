@@ -53,7 +53,7 @@ func init() {
 		TOKEN_GREATER_EQUAL: {prefix: nil, infix: compiler.binary, precedence: PREC_COMPARISON},
 		TOKEN_LESS:          {prefix: nil, infix: compiler.binary, precedence: PREC_COMPARISON},
 		TOKEN_LESS_EQUAL:    {prefix: nil, infix: compiler.binary, precedence: PREC_COMPARISON},
-		TOKEN_IDENTIFIER:    {prefix: nil, infix: nil, precedence: PREC_NONE},
+		TOKEN_IDENTIFIER:    {prefix: compiler.variable, infix: nil, precedence: PREC_NONE},
 		TOKEN_STRING:        {prefix: compiler.string, infix: nil, precedence: PREC_NONE},
 		TOKEN_NUMBER:        {prefix: compiler.number, infix: nil, precedence: PREC_NONE},
 		TOKEN_AND:           {prefix: nil, infix: nil, precedence: PREC_NONE},
@@ -364,4 +364,14 @@ func (compiler *Compiler) literal() {
 func (compiler *Compiler) string() {
 	str := compiler.previous.value[1 : len(compiler.previous.value)-1]
 	compiler.emitConstant(NewObjVal(NewObjString(str)))
+}
+
+func (compiler *Compiler) variable() {
+	compiler.namedVariable(compiler.previous)
+}
+
+func (compiler *Compiler) namedVariable(name Token) {
+	nameConstant := compiler.identifierConstant(&name)
+	constant0, constant1, constant2 := SplitConstant(nameConstant)
+	compiler.emitBytes(OP_GET_GLOBAL, constant0, constant1, constant2)
 }

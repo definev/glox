@@ -165,6 +165,15 @@ func (vm *VM) Run() InterpretResult {
 			nameValue := (*vm.chunk.Constants.Values)[nameConstant].AsString()
 			vm.globals.Set(nameValue, vm.Peek(0))
 			vm.Pop()
+		case OP_GET_GLOBAL:
+			nameConstant := vm.ReadConstant()
+			nameValue := (*vm.chunk.Constants.Values)[nameConstant].AsString()
+			value, found := vm.globals.Get(nameValue)
+			if !found {
+				vm.runtimeError("Undefined variable '%s'.", nameValue.Chars)
+				return INTERPRET_RUNTIME_ERROR
+			}
+			vm.Push(value)
 		case OP_POP:
 			vm.Pop()
 		case OP_PRINT:
