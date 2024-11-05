@@ -50,10 +50,9 @@ func main() {
 	vm := glox.NewVM()
 
 	vm.Init()
-	vm.Interpret(`
-var beverage = "cafe au lait";
-var breakfast = "beignets with " + beverage;
-print breakfast;
-	`)
+	vm.Interpret(`var a = 1;
+var b = 2 + 3 + a;
+print a + b;
+print "Hello, World!";`)
 	vm.Free()
 }

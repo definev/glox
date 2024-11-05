@@ -4,8 +4,8 @@ import (
 	"fmt"
 )
 
-const DEBUG_TRACE_EXECUTION = true
-const DEBUG_PRINT_CODE = true
+const DEBUG_TRACE_EXECUTION = false
+const DEBUG_PRINT_CODE = false
 
 func (c *Chunk) DisassembleChunk(name string) {
 	fmt.Printf("== %s ==\n", name)

@@ -29,7 +29,7 @@ func (o ObjString) GetObjType() ObjType {
 }
 
 func (o ObjString) Print() {
-	fmt.Printf("<obj> %s", string(o.Chars))
+	fmt.Printf("%s", string(o.Chars))
 }
 
 func (value *Value) IsObjValue(objType ObjType) bool {

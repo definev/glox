@@ -218,7 +218,6 @@ func (scanner *Scanner) scanToken() Token {
 	scanner.skipWhitespace()
 
 	scanner.start = scanner.current
-	// scanner.line = 1
 
 	if scanner.isAtEnd() {
 		return scanner.makeToken(TOKEN_EOF)
